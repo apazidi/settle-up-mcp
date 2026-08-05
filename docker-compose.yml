@@ -1,0 +1,33 @@
+services:
+  settleup-mcp:
+    build: .
+    image: settleup-mcp:latest
+    ports:
+      - "8000:8000"
+    environment:
+      # Caution: Keep each secret out of the image. Set it at run time.
+      - SETTLEUP_EMAIL=${SETTLEUP_EMAIL}
+      - SETTLEUP_PASSWORD=${SETTLEUP_PASSWORD}
+      - SETTLEUP_FIREBASE_API_KEY=${SETTLEUP_FIREBASE_API_KEY}
+      - SETTLEUP_BASE_URL=${SETTLEUP_BASE_URL:-https://settle-up-sandbox.firebaseio.com}
+      - MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN:-}
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      # The server gives a /health route for this test.
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

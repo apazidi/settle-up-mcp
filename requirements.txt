@@ -1,4 +1,0 @@
-# The pinned runtime requirements.
-fastmcp==4.0.0b1
-httpx==0.28.1
-pydantic==2.13.4

@@ -76,15 +76,49 @@ of the container for a production deployment.**
 
 ## 5. Local start
 
+This project uses Pipenv. The `Pipfile.lock` file pins each package.
+
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
+# Install the tools one time.
+brew install pipenv direnv
+
+# Install the packages.
+pipenv install --dev
+
+# Start the server.
 set -a && source .env && set +a
-.venv/bin/python -m settleup_mcp.server
+pipenv run server
 ```
 
 The MCP endpoint is `http://127.0.0.1:8000/mcp`.
 The health route is `http://127.0.0.1:8000/health`.
+
+### 5.1 direnv
+
+The `.envrc` file holds `layout pipenv`. direnv then loads the virtual
+environment when you enter the folder. Run this command one time:
+
+```bash
+direnv allow
+```
+
+After that, `python` and `pytest` use the project packages. You do not need
+`pipenv run`.
+
+### 5.2 Pipenv commands
+
+| Command | Action |
+|---|---|
+| `pipenv install --dev` | Install each package from the lock file |
+| `pipenv install <name>` | Add a package. This changes the lock file |
+| `pipenv install --dev <name>` | Add a test package |
+| `pipenv update` | Update the lock file to newer versions |
+| `pipenv run server` | Start the server |
+| `pipenv run test` | Run the tests |
+| `pipenv requirements` | Print the locked packages as a pip list |
+
+**Caution: Always commit the `Pipfile.lock` file. The image build and the
+workflow read it.**
 
 ## 6. Container start
 
@@ -125,7 +159,7 @@ secret from the environment at run time. The image holds no secret.
 
 The workflow `.github/workflows/docker.yml` does these steps:
 
-1. Run the tests with Python 3.12.
+1. Run the tests with Python 3.13 and Pipenv.
 2. Build 1 image. Start a container. Test the `/health` route.
 3. Build the image for 2 architectures. Push it to GHCR.
 4. Attest the build provenance.
@@ -145,8 +179,7 @@ package stays private, each user needs a token to pull the image.**
 ## 8. Tests
 
 ```bash
-.venv/bin/pip install pytest
-.venv/bin/python -m pytest
+pipenv run test
 ```
 
 The tests use a fake HTTP transport. They make no call to Settle Up.
@@ -163,6 +196,9 @@ transport.
 ## 9. Project structure
 
 ```
+Pipfile          The direct packages.
+Pipfile.lock     The exact version of each package.
+.envrc           The direnv rule. It loads the pipenv environment.
 settleup_mcp/
   server.py      Build the server. Add the health route. Start the server.
   client.py      The REST client. All Settle Up calls stay here.

@@ -30,15 +30,17 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: requirements-dev.txt
+          python-version: "3.13"
+          cache: pipenv
+
+      - name: Install pipenv
+        run: pip install pipenv==2026.0.3
 
       - name: Install the requirements
-        run: pip install -r requirements-dev.txt
+        run: pipenv install --dev --deploy
 
       - name: Run the tests
-        run: python -m pytest -q
+        run: pipenv run test
 
   build:
     name: Build the image

@@ -2,8 +2,9 @@ __pycache__
 .venv
 .git
 .github
+.envrc
 tests
 .env
 *.md
 .pytest_cache
-requirements-dev.txt
+pytest.ini

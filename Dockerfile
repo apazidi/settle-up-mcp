@@ -1,5 +1,14 @@
-# Use a small Python base image.
-FROM python:3.12-slim
+# Stage 1: change the lock file into a plain requirements list.
+FROM python:3.13-slim AS requirements
+
+RUN pip install --no-cache-dir pipenv==2026.0.3
+WORKDIR /tmp
+COPY Pipfile Pipfile.lock ./
+# pipenv verify stops the build if the Pipfile and the lock file do not agree.
+RUN pipenv verify && pipenv requirements > requirements.txt
+
+# Stage 2: build the server image.
+FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -9,8 +18,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN useradd --create-home --uid 10001 appuser
 WORKDIR /app
 
-# Install the pinned requirements.
-COPY requirements.txt .
+# Install the locked requirements.
+COPY --from=requirements /tmp/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the code.

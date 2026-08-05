@@ -1,5 +1,7 @@
 # Settle Up MCP Server
 
+[![Build and push the image](https://github.com/rithviknishad/settle-up-mcp/actions/workflows/docker.yml/badge.svg)](https://github.com/rithviknishad/settle-up-mcp/actions/workflows/docker.yml)
+
 This server gives Settle Up tools to an AI agent. The agent reads groups,
 members, transactions, and balances. The agent can also add an expense.
 
@@ -86,6 +88,8 @@ The health route is `http://127.0.0.1:8000/health`.
 
 ## 6. Container start
 
+### 6.1 Build the image on your machine
+
 ```bash
 docker build -t settleup-mcp .
 docker compose up -d
@@ -93,10 +97,52 @@ docker compose ps
 curl http://localhost:8000/health
 ```
 
+### 6.2 Pull the image from GHCR
+
+GitHub Actions builds the image for `linux/amd64` and `linux/arm64`. It pushes
+the image to the GitHub Container Registry.
+
+```bash
+docker pull ghcr.io/rithviknishad/settle-up-mcp:latest
+```
+
+Available tags:
+
+| Tag | Content |
+|---|---|
+| `latest` | The last commit on the `main` branch |
+| `main` | The same image as `latest` |
+| `1.2.3`, `1.2`, `1` | A version tag, for example the git tag `v1.2.3` |
+| `sha-<commit>` | One exact commit |
+
+To use the image with the compose file, set the `image` value and delete the
+`build` value.
+
 The container runs as the non-root user `appuser`. The compose file reads each
 secret from the environment at run time. The image holds no secret.
 
-## 7. Tests
+## 7. Continuous integration
+
+The workflow `.github/workflows/docker.yml` does these steps:
+
+1. Run the tests with Python 3.12.
+2. Build 1 image. Start a container. Test the `/health` route.
+3. Build the image for 2 architectures. Push it to GHCR.
+4. Attest the build provenance.
+
+A pull request runs the tests and the build, but it pushes no image.
+
+To make a release, push a version tag:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+**Caution: Make the GHCR package public in the repository settings. If the
+package stays private, each user needs a token to pull the image.**
+
+## 8. Tests
 
 ```bash
 .venv/bin/pip install pytest
@@ -114,7 +160,7 @@ npx @modelcontextprotocol/inspector
 Connect the inspector to `http://localhost:8000/mcp`. Use the Streamable HTTP
 transport.
 
-## 8. Project structure
+## 9. Project structure
 
 ```
 settleup_mcp/
@@ -133,7 +179,7 @@ To add a tool:
 3. Add the tool function to a file in `tools/`.
 4. Set the annotations. Use `READ_ONLY` or `WRITE` from `tools/common.py`.
 
-## 9. Data notes
+## 10. Data notes
 
 - An amount is a decimal string, for example `"250.50"`.
 - An income is an expense with a negative amount.

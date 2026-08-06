@@ -92,6 +92,15 @@ transport.
 
 To use a built image, pull `ghcr.io/rithviknishad/settle-up-mcp:latest`.
 
+## Deploy it
+
+Put the server behind HTTPS. Set `MCP_AUTH_TOKEN`. Keep the Settle Up
+secrets on the server only.
+
+For a Kubernetes example, read
+[Settle Up MCP on systems.nix](https://rithviknishad.github.io/systems.nix/settle-up-mcp.html).
+It shows a k3s deployment with the secrets, the service, and the ingress.
+
 ## Connect an agent
 
 ```json

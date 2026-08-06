@@ -10,6 +10,77 @@ T = TypeVar("T")
 
 READ_ONLY = {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True}
 WRITE = {"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True}
+DESTRUCTIVE = {
+    "readOnlyHint": False,
+    "destructiveHint": True,
+    "idempotentHint": True,
+    "openWorldHint": True,
+}
+
+
+def names_of(members: dict[str, Any]) -> dict[str, Any]:
+    """Give a map from the member id to the member name."""
+    return {
+        member_id: (member or {}).get("name")
+        for member_id, member in members.items()
+        if isinstance(member, dict)
+    }
+
+
+def shares_of(shares: list[Any]) -> list[dict[str, str]]:
+    """Change each MemberShare into the API form."""
+    return [
+        {"memberId": share.member_id, "weight": share.weight} for share in shares
+    ]
+
+
+def default_split(members: dict[str, Any]) -> list[Any]:
+    """Give each active member with the default weight of that member."""
+    from settleup_mcp.models import MemberShare
+
+    shares = []
+    for member_id, member in members.items():
+        if not isinstance(member, dict) or not member.get("active", True):
+            continue
+        weight = str(member.get("defaultWeight", "1"))
+        if decimal_of(weight) == 0:
+            continue
+        shares.append(MemberShare(member_id=member_id, weight=weight))
+    return shares
+
+
+def check_members(members: dict[str, Any], *groups: list[Any]) -> None:
+    """Stop the tool if a member id is not in the group."""
+    from settleup_mcp.client import SettleUpError
+
+    wanted = {share.member_id for shares in groups for share in shares}
+    unknown = sorted(wanted - set(members.keys()))
+    if unknown:
+        raise SettleUpError(
+            f"The group does not have these member ids: {', '.join(unknown)}. "
+            "Use settleup_list_members to find the correct member ids."
+        )
+
+
+def group_currency(
+    group: dict[str, Any] | None, wanted: str | None
+) -> str:
+    """Give the currency for a new transaction. Stop on a currency conflict."""
+    from settleup_mcp.client import SettleUpError
+
+    current = (group or {}).get("convertedToCurrency")
+    currency = wanted or current
+    if not currency:
+        raise SettleUpError(
+            "The group has no currency. Give currency_code, for example 'EUR'."
+        )
+    if current and currency != current:
+        raise SettleUpError(
+            f"The group uses {current}. This tool cannot write an amount in "
+            f"{currency}, because it has no exchange rate. "
+            f"Give the amount in {current}."
+        )
+    return str(currency)
 
 
 def paginate(items: list[T], limit: int, offset: int) -> dict[str, Any]:

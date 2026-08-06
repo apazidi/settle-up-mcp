@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
@@ -153,12 +154,139 @@ class SettleUpClient:
     async def create_transaction(self, group_id: str, transaction: Json) -> str:
         """Create one transaction. Give the new transaction id."""
         result = await self.post(f"transactions/{group_id}", transaction)
-        if not isinstance(result, dict) or "name" not in result:
+        return _new_id(result, "transaction")
+
+    async def get_transaction(self, group_id: str, transaction_id: str) -> Json | None:
+        """Give one transaction."""
+        return await self.get(f"transactions/{group_id}/{transaction_id}")
+
+    async def replace_transaction(
+        self, group_id: str, transaction_id: str, transaction: Json
+    ) -> None:
+        """Write one transaction. The old value is lost."""
+        await self.put(f"transactions/{group_id}/{transaction_id}", transaction)
+
+    async def delete_transaction(self, group_id: str, transaction_id: str) -> None:
+        """Delete one transaction."""
+        await self.delete(f"transactions/{group_id}/{transaction_id}")
+
+    # ---- Members ------------------------------------------------------
+
+    async def create_member(self, group_id: str, member: Json) -> str:
+        """Create one member. Give the new member id."""
+        result = await self.post(f"members/{group_id}", member)
+        return _new_id(result, "member")
+
+    async def get_member(self, group_id: str, member_id: str) -> Json | None:
+        """Give one member."""
+        return await self.get(f"members/{group_id}/{member_id}")
+
+    async def update_member(
+        self, group_id: str, member_id: str, changes: Json
+    ) -> None:
+        """Change some fields of one member."""
+        await self.patch(f"members/{group_id}/{member_id}", changes)
+
+    # ---- Groups -------------------------------------------------------
+
+    async def create_group(self, group: Json) -> str:
+        """Create one group. Give the new group id."""
+        result = await self.post("groups", group)
+        return _new_id(result, "group")
+
+    async def update_group(self, group_id: str, changes: Json) -> None:
+        """Change some fields of one group."""
+        await self.patch(f"groups/{group_id}", changes)
+
+    async def set_permission(self, group_id: str, user_id: str, level: int) -> None:
+        """Give one user access to one group."""
+        await self.put(f"permissions/{group_id}/{user_id}", {"level": level})
+
+    async def list_permissions(self, group_id: str) -> Json:
+        """Give the users that can access one group. The key is the user id."""
+        return await self.get(f"permissions/{group_id}") or {}
+
+    async def set_user_group(self, user_id: str, group_id: str, link: Json) -> None:
+        """Add one group to the group list of one user."""
+        await self.put(f"userGroups/{user_id}/{group_id}", link)
+
+    async def set_current_tab(self, user_id: str, group_id: str) -> None:
+        """Set the group that the user sees next in the app."""
+        await self.put(f"users/{user_id}/currentTabId", group_id)
+
+    async def list_categories(self, group_id: str) -> Json:
+        """Give the custom category names. The key is the emoji."""
+        return await self.get(f"groupCategories/{group_id}") or {}
+
+    async def list_changes(self, group_id: str) -> Json:
+        """Give the change log of one group. The key is the change id."""
+        return await self.get(f"changes/{group_id}") or {}
+
+    # ---- Recurring transactions ---------------------------------------
+
+    async def list_recurring(self, group_id: str) -> Json:
+        """Give the transaction templates. The key is the template id."""
+        return await self.get(f"recurringTransactions/{group_id}") or {}
+
+    async def create_recurring(self, group_id: str, template: Json) -> str:
+        """Create one transaction template. Give the new template id."""
+        result = await self.post(f"recurringTransactions/{group_id}", template)
+        return _new_id(result, "recurring transaction")
+
+    async def delete_recurring(self, group_id: str, template_id: str) -> None:
+        """Delete one transaction template."""
+        await self.delete(f"recurringTransactions/{group_id}/{template_id}")
+
+    # ---- Server tasks -------------------------------------------------
+
+    async def run_server_task(
+        self,
+        task_name: str,
+        request: Json,
+        *,
+        attempts: int = 10,
+        delay_seconds: float = 1.0,
+    ) -> Json:
+        """Start one server task. Wait for the result.
+
+        The Settle Up server runs these tasks in the background. This method
+        polls the response code until the task gives an answer.
+        """
+        result = await self.post(f"serverTasks/{task_name}", {"request": request})
+        task_id = _new_id(result, f"{task_name} task")
+
+        for attempt in range(attempts):
+            if attempt:
+                await asyncio.sleep(delay_seconds)
+            code = await self.get(f"serverTasks/{task_name}/{task_id}/response/code")
+            if code is None:
+                continue
+            text = str(code)
+            if text.lower() == "ok":
+                return {"task_id": task_id, "status": "ok"}
             raise SettleUpError(
-                "The Settle Up API gave no id for the new transaction. "
-                "Read the group transactions to confirm the result."
+                f"The Settle Up server task {task_name} failed with the code "
+                f"{text!r}. Check the input values. Then try again."
             )
-        return str(result["name"])
+
+        return {
+            "task_id": task_id,
+            "status": "pending",
+            "note": (
+                f"The task {task_name} still runs. Read the group again in some "
+                "seconds to confirm the result."
+            ),
+        }
+
+
+def _new_id(result: Any, entity: str) -> str:
+    """Read the new key out of a Firebase POST answer."""
+    if not isinstance(result, dict) or "name" not in result:
+        raise SettleUpError(
+            f"The Settle Up API gave no id for the new {entity}. "
+            "Read the group again to confirm the result."
+        )
+    return str(result["name"])
 
 
 def _explain(method: str, path: str, response: httpx.Response) -> str:

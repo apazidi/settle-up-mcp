@@ -1,9 +1,8 @@
-"""Test each tool through an in-memory MCP client."""
+"""Test the group tools and the expense tools through an MCP client."""
 
 from __future__ import annotations
 
 import asyncio
-from typing import Any
 
 import pytest
 from fastmcp import Client
@@ -11,37 +10,70 @@ from fastmcp.exceptions import ToolError
 
 from settleup_mcp.client import SettleUpClient
 from settleup_mcp.server import create_server
-from tests.conftest import FakeServer, make_settings
+from tests.conftest import FakeServer, call, make_settings
+
+READ_TOOLS = {
+    "settleup_get_balances",
+    "settleup_get_expense",
+    "settleup_get_group",
+    "settleup_list_categories",
+    "settleup_list_changes",
+    "settleup_list_expenses",
+    "settleup_list_groups",
+    "settleup_list_members",
+    "settleup_list_permissions",
+    "settleup_list_recurring",
+    "settleup_summarize_spending",
+}
+
+DESTRUCTIVE_TOOLS = {
+    "settleup_delete_expense",
+    "settleup_delete_group",
+    "settleup_delete_recurring",
+}
+
+ALL_TOOLS = sorted(
+    READ_TOOLS
+    | DESTRUCTIVE_TOOLS
+    | {
+        "settleup_add_expense",
+        "settleup_add_member",
+        "settleup_add_recurring",
+        "settleup_add_transfer",
+        "settleup_change_currency",
+        "settleup_create_group",
+        "settleup_deactivate_member",
+        "settleup_get_invite_link",
+        "settleup_recalculate_debts",
+        "settleup_update_expense",
+        "settleup_update_group",
+        "settleup_update_member",
+    }
+)
 
 
-def call(server: FakeServer, tool: str, request: dict[str, Any]) -> Any:
-    """Call one tool. Give the structured result."""
-
-    async def run() -> Any:
-        api = SettleUpClient(make_settings(), server.client())
+def _tools() -> list:
+    async def run() -> list:
+        api = SettleUpClient(make_settings(), FakeServer().client())
         mcp = create_server(make_settings(), api)
         async with Client(mcp) as client:
-            result = await client.call_tool(tool, {"request": request})
-        return result.data
+            return await client.list_tools()
 
     return asyncio.run(run())
 
 
 def test_the_server_lists_each_tool() -> None:
-    async def run() -> list[str]:
-        api = SettleUpClient(make_settings(), FakeServer().client())
-        mcp = create_server(make_settings(), api)
-        async with Client(mcp) as client:
-            tools = await client.list_tools()
-        return sorted(tool.name for tool in tools)
+    assert sorted(tool.name for tool in _tools()) == ALL_TOOLS
+    assert len(ALL_TOOLS) == 26
 
-    assert asyncio.run(run()) == [
-        "settleup_add_expense",
-        "settleup_get_balances",
-        "settleup_list_expenses",
-        "settleup_list_groups",
-        "settleup_list_members",
-    ]
+
+def test_each_tool_has_the_correct_annotations() -> None:
+    for tool in _tools():
+        hints = tool.annotations
+        assert hints is not None, tool.name
+        assert bool(hints.read_only_hint) is (tool.name in READ_TOOLS), tool.name
+        if tool.name in DESTRUCTIVE_TOOLS:
+            assert hints.destructive_hint is True, tool.name
 
 
 def test_list_groups_sorts_and_paginates() -> None:

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16152b"/>
+      <stop offset="1" stop-color="#31205d"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e9e7ff"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#090817" flood-opacity=".35"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="1430" cy="100" r="260" fill="#8b5cf6" opacity=".12"/>
+  <circle cx="120" cy="820" r="300" fill="#22d3a6" opacity=".08"/>
+  <path d="M0 680 C300 600 470 850 760 720 S1220 610 1600 760 L1600 900 L0 900 Z" fill="#0f1021" opacity=".35"/>
+
+  <g transform="translate(130 120)">
+    <rect x="0" y="0" width="72" height="72" rx="20" fill="#22d3a6"/>
+    <path d="M20 40h32M36 24v32" stroke="#101525" stroke-width="9" stroke-linecap="round"/>
+    <text x="100" y="48" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="700">OPEN SOURCE MCP SERVER</text>
+  </g>
+
+  <text x="130" y="300" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="92" font-weight="800" letter-spacing="-3">Settle Up</text>
+  <text x="130" y="390" fill="#22d3a6" font-family="Inter, Arial, sans-serif" font-size="92" font-weight="800" letter-spacing="-3">MCP</text>
+  <text x="138" y="465" fill="#d7d2ef" font-family="Inter, Arial, sans-serif" font-size="32">Split expenses. Calculate balances. Settle up.</text>
+  <text x="138" y="515" fill="#aaa4cb" font-family="Inter, Arial, sans-serif" font-size="26">Give your AI assistant the tools to handle shared expenses.</text>
+
+  <g transform="translate(960 145) rotate(5)" filter="url(#shadow)">
+    <rect width="430" height="560" rx="30" fill="url(#card)"/>
+    <circle cx="55" cy="58" r="20" fill="#22d3a6"/>
+    <text x="92" y="68" fill="#1d1b38" font-family="Inter, Arial, sans-serif" font-size="25" font-weight="800">TRIP EXPENSES</text>
+    <text x="42" y="140" fill="#777393" font-family="Inter, Arial, sans-serif" font-size="20">Dinner in Lisbon</text>
+    <text x="42" y="180" fill="#1d1b38" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="800">€180.00</text>
+    <line x1="42" y1="220" x2="388" y2="220" stroke="#d8d5ed" stroke-width="2"/>
+    <text x="42" y="270" fill="#777393" font-family="Inter, Arial, sans-serif" font-size="19">WHO OWES WHAT</text>
+    <circle cx="62" cy="322" r="18" fill="#8b5cf6"/>
+    <text x="95" y="330" fill="#24213e" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="700">Alex</text>
+    <text x="335" y="330" fill="#ef5da8" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="800">€45</text>
+    <circle cx="62" cy="382" r="18" fill="#22d3a6"/>
+    <text x="95" y="390" fill="#24213e" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="700">Sam</text>
+    <text x="335" y="390" fill="#22a683" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="800">€60</text>
+    <circle cx="62" cy="442" r="18" fill="#ffb454"/>
+    <text x="95" y="450" fill="#24213e" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="700">Riya</text>
+    <text x="335" y="450" fill="#d78a22" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="800">€75</text>
+    <rect x="42" y="488" width="346" height="38" rx="19" fill="#dffaf2"/>
+    <text x="215" y="514" text-anchor="middle" fill="#148363" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800">ALL SETTLED ✓</text>
+  </g>
+
+  <text x="138" y="790" fill="#8e88af" font-family="Inter, Arial, sans-serif" font-size="23">github.com/rithviknishad/settle-up-mcp</text>
+  <text x="138" y="835" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">#MCP   #OpenSource   #AI</text>
+</svg>

@@ -1,4 +1,4 @@
-# Settle Up MCP Server
+![Settle Up MCP banner](banner.svg)
 
 [![Build and push the image](https://github.com/rithviknishad/settle-up-mcp/actions/workflows/docker.yml/badge.svg)](https://github.com/rithviknishad/settle-up-mcp/actions/workflows/docker.yml)
 

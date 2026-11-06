@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Подключение Settle Up к Codex</title>
+<style>
+body{margin:0;background:#f7f5f9;color:#27232c;font:17px/1.55 system-ui,sans-serif}
+main{max-width:590px;margin:9vh auto;padding:36px;background:white;border-radius:24px;box-shadow:0 8px 36px #251a3510}
+.badge{font-size:13px;font-weight:700;letter-spacing:.08em;color:#85604c}
+h1{font-size:32px;line-height:1.2;margin:16px 0}
+p{color:#5a5560}
+#status{min-height:52px;margin-top:22px}
+small{display:block;color:#77717c;margin-top:24px}
+@media(max-width:680px){main{margin:25px 16px;padding:24px}}
+</style>
+<main>
+<div class="badge">SETTLE UP · SANDBOX</div>
+<h1>Подключить тестовый аккаунт</h1>
+<p>Войди через тот же Google-аккаунт, который используешь в тестовом Settle Up.</p>
+<div id="google-button"></div>
+<p id="status" role="status">Подготовка входа…</p>
+<small>Сессия сохранится на этом компьютере. После подключения Codex сможет читать и изменять данные твоего sandbox-аккаунта.</small>
+</main>
+<script type="module">
+const csrf = __SETUP_TOKEN__;
+const status = document.querySelector("#status");
+const button = document.querySelector("#google-button");
+try {
+  const [{initializeApp}, firebase] = await Promise.all([
+    import("https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js"),
+    import("https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js")
+  ]);
+  const response = await fetch("/config", {headers: {"X-Setup-Token": csrf}, cache:"no-store"});
+  if (!response.ok) throw new Error("configuration");
+  const config = await response.json();
+  const auth = firebase.getAuth(initializeApp(config));
+  await firebase.setPersistence(auth, firebase.inMemoryPersistence);
+  const provider = new firebase.GoogleAuthProvider();
+  provider.setCustomParameters({prompt:"select_account"});
+  const loginButton = document.createElement("button");
+  loginButton.type = "button";
+  loginButton.textContent = "Войти через Google";
+  loginButton.style.cssText = "background:#faad99;border:0;padding:15px 22px;border-radius:12px;font:600 16px system-ui;cursor:pointer";
+  button.appendChild(loginButton);
+  loginButton.onclick = async () => {
+    loginButton.disabled = true;
+    status.textContent = "Заверши вход в окне Google.";
+    let saved = false;
+    try {
+      const result = await firebase.signInWithPopup(auth, provider);
+      status.textContent = "Сохраняю подключение…";
+      const done = await fetch("/complete", {
+        method:"POST",
+        headers:{"Content-Type":"application/json", "X-Setup-Token":csrf},
+        body:JSON.stringify({refresh_token:result.user.refreshToken})
+      });
+      if (!done.ok) throw {code:"setup/save-failed"};
+      saved = true;
+      status.textContent = "Готово! Аккаунт подключён. Эту вкладку можно закрыть.";
+      loginButton.textContent = "Подключено";
+    } catch (error) {
+      const code = typeof error.code === "string" && /^(auth|setup)\/[a-z-]+$/.test(error.code) ? " (" + error.code + ")" : "";
+      status.textContent = "Не удалось завершить вход" + code + ". Повтори попытку.";
+    } finally {
+      try { await firebase.signOut(auth); } catch {}
+      if (!saved) loginButton.disabled = false;
+    }
+  };
+  status.textContent = "Нажми кнопку Google и выбери свой аккаунт.";
+} catch {
+  status.textContent = "Не удалось подготовить вход. Проверь интернет и перезагрузи страницу.";
+}
+</script>
+</html>

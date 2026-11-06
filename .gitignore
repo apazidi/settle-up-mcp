@@ -22,3 +22,4 @@ service-account*.json
 token.json
 tokens.json
 secrets.json
+.local/

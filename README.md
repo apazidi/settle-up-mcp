@@ -6,6 +6,12 @@ An MCP server for [Settle Up](https://settleup.io). It lets an AI agent read
 and write your groups, members, expenses, balances, and recurring
 transactions. The server gives 26 tools.
 
+## Local Codex setup
+
+See [the Windows Codex guide](docs/codex-local.md) for sandbox Google sign-in,
+local server startup and Codex configuration. The helper saves the Firebase
+session locally without manually copying tokens from browser storage.
+
 ## ChatGPT / OAuth support in this fork
 
 See [the setup guide](docs/chatgpt.md) for ChatGPT web. This fork adds Google

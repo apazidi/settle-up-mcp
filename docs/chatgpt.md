@@ -32,10 +32,11 @@ group with fictitious expenses. Choose one server login method:
   Email/password can stay empty. This must be the **Firebase refresh token**,
   not a Google access token, ID token, or developer API key.
 
-This version accepts an existing Firebase session; it does not yet provide
-an interactive Settle Up login/bootstrap screen. Do not paste session tokens
-into chat, issues, source code or screenshots. Enter them directly into your
-local secret store or untracked `.env`. Sandbox tokens cannot access live data.
+For sandbox Google accounts, use the [local sign-in helper](codex-local.md):
+`python -m settleup_mcp.local_login`. It saves a verified Firebase session into
+the existing local `.env`. Live sign-in still requires a separately obtained
+session. Do not paste session tokens into chat, issues, source code or
+screenshots. Sandbox tokens cannot access live data.
 
 Firebase token rotation is followed in memory. The configured seed token is
 not overwritten. If it is revoked or stops working after a restart, sign in

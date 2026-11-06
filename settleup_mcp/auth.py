@@ -28,7 +28,7 @@ class FirebaseAuth:
         self._http = http_client
         self._lock = asyncio.Lock()
         self._id_token: str | None = None
-        self._refresh_token: str | None = None
+        self._refresh_token: str | None = settings.refresh_token
         self._user_id: str | None = None
         self._expires_at: float = 0.0
 
@@ -46,8 +46,15 @@ class FirebaseAuth:
                 try:
                     await self._refresh()
                     return self._id_token or ""
-                except AuthError as error:
-                    logger.warning("The token refresh failed: %s", error)
+                except AuthError:
+                    if self._settings.refresh_token:
+                        # An explicitly configured OAuth session must never
+                        # fall back to another identity via email/password.
+                        raise AuthError(
+                            "The Settle Up session could not be refreshed. Retry, or "
+                            "sign in to Settle Up again and replace SETTLEUP_REFRESH_TOKEN."
+                        ) from None
+                    logger.warning("The token refresh failed; retrying password sign-in.")
             await self._sign_in()
             return self._id_token or ""
 
@@ -79,6 +86,8 @@ class FirebaseAuth:
 
     async def _sign_in(self) -> None:
         """Exchange the email and the password for the 2 tokens."""
+        if not self._settings.email or not self._settings.password:
+            raise AuthError("Configure SETTLEUP_REFRESH_TOKEN or Settle Up email/password.")
         payload: dict[str, object] = {
             "email": self._settings.email,
             "password": self._settings.password,
@@ -132,19 +141,19 @@ class FirebaseAuth:
     ) -> dict[str, str]:
         try:
             response = await self._http.post(url, params=params, json=json, data=data)
-        except httpx.HTTPError as error:
+        except httpx.HTTPError:
             raise AuthError(
                 f"The server cannot reach Firebase to {action}. "
-                f"Check the network. Details: {error}"
-            ) from error
+                "Check the network."
+            ) from None
 
         if response.status_code >= 400:
             raise AuthError(
                 f"Firebase refused the request to {action}. "
                 f"Status {response.status_code}. "
                 f"Reason: {_firebase_reason(response)}. "
-                "Check SETTLEUP_EMAIL, SETTLEUP_PASSWORD, and "
-                "SETTLEUP_FIREBASE_API_KEY."
+                "Check the configured Settle Up credentials: SETTLEUP_EMAIL, "
+                "SETTLEUP_PASSWORD or SETTLEUP_REFRESH_TOKEN, and SETTLEUP_FIREBASE_API_KEY."
             )
         return response.json()
 

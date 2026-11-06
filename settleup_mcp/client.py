@@ -118,11 +118,11 @@ class SettleUpClient:
 
         try:
             return await self._http.request(method, url, params=query, json=json)
-        except httpx.HTTPError as error:
+        except httpx.HTTPError:
             raise SettleUpError(
                 f"The server cannot reach the Settle Up API at {path}. "
-                f"Check the network and SETTLEUP_BASE_URL. Details: {error}"
-            ) from error
+                "Check the network and SETTLEUP_BASE_URL."
+            ) from None
 
     # ---- Domain calls -------------------------------------------------
 

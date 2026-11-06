@@ -8,3 +8,19 @@ tests
 *.md
 .pytest_cache
 pytest.ini
+
+# Credentials and local OAuth state stay out of Git and Docker build context.
+.env.*
+!.env.example
+.oauth/
+oauth-state/
+.fastmcp/
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
+token.json
+tokens.json
+secrets.json

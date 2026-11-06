@@ -6,6 +6,23 @@ An MCP server for [Settle Up](https://settleup.io). It lets an AI agent read
 and write your groups, members, expenses, balances, and recurring
 transactions. The server gives 26 tools.
 
+## ChatGPT / OAuth support in this fork
+
+See [the setup guide](docs/chatgpt.md) for ChatGPT web. This fork adds Google
+OAuth with a required owner allowlist and accepts existing Settle Up Firebase
+refresh tokens for accounts that sign in through Google.
+
+MCP client authentication and the Settle Up Firebase session are independent.
+This remains a single-account server.
+
+**Startup change:** missing MCP credentials now stop startup. Static-token
+clients retain `MCP_AUTH_MODE=token`. Anonymous tests must explicitly select
+`MCP_AUTH_MODE=none` with a loopback listener. Google mode requires
+`MCP_AUTH_MODE=google` and the settings in the guide.
+
+Build this fork locally with `docker compose up --build -d`. The upstream
+GHCR image mentioned below does not contain these changes.
+
 ## Tools
 
 ### Groups
@@ -68,17 +85,19 @@ Copy `.env.example` to `.env`. Then write your values.
 
 | Variable | Purpose |
 |---|---|
-| `SETTLEUP_EMAIL` | Your Settle Up email |
-| `SETTLEUP_PASSWORD` | Your Settle Up password |
+| `SETTLEUP_EMAIL` | Email for password login; optional with a refresh token |
+| `SETTLEUP_PASSWORD` | Password login only |
 | `SETTLEUP_FIREBASE_API_KEY` | The Firebase Web API key |
 | `SETTLEUP_BASE_URL` | The API server. The default is the sandbox |
-| `MCP_AUTH_TOKEN` | The bearer token that each agent must send |
+| `SETTLEUP_REFRESH_TOKEN` | Firebase session for an existing OAuth account |
+| `MCP_AUTH_MODE` | token (default), google, or explicit loopback none |
+| `MCP_AUTH_TOKEN` | Required in token mode |
 
 The [Settle Up API documentation](https://api.settleup.io) gives the API key,
 the server URLs, and the sign-in rules. Develop on the sandbox first.
 
-**Caution: If `MCP_AUTH_TOKEN` is empty, the server accepts each request. Set a
-token and put HTTPS in front of the server before you deploy it.**
+**Token mode requires MCP_AUTH_TOKEN.** For Google OAuth, follow the setup
+guide above. Put HTTPS in front of any deployed server.
 
 ## Run it
 
@@ -94,8 +113,8 @@ To use a built image, pull `ghcr.io/rithviknishad/settle-up-mcp:latest`.
 
 ## Deploy it
 
-Put the server behind HTTPS. Set `MCP_AUTH_TOKEN`. Keep the Settle Up
-secrets on the server only.
+Put the server behind HTTPS. Configure token or Google OAuth authentication.
+Keep the Settle Up secrets on the server only.
 
 For a Kubernetes example, read
 [Settle Up MCP on systems.nix](https://rithviknishad.github.io/systems.nix/settle-up-mcp.html).

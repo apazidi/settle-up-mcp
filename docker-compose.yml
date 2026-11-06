@@ -3,23 +3,33 @@ services:
     build: .
     image: settleup-mcp:latest
     ports:
-      - "8000:8000"
+      # An HTTPS reverse proxy on this host forwards to this loopback port.
+      - "127.0.0.1:8000:8000"
     environment:
-      # Caution: Keep each secret out of the image. Set it at run time.
-      - SETTLEUP_EMAIL=${SETTLEUP_EMAIL}
-      - SETTLEUP_PASSWORD=${SETTLEUP_PASSWORD}
-      - SETTLEUP_FIREBASE_API_KEY=${SETTLEUP_FIREBASE_API_KEY}
-      - SETTLEUP_BASE_URL=${SETTLEUP_BASE_URL:-https://settle-up-sandbox.firebaseio.com}
-      - MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN:-}
-      - MCP_HOST=0.0.0.0
-      - MCP_PORT=8000
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      SETTLEUP_EMAIL: ${SETTLEUP_EMAIL:-}
+      SETTLEUP_PASSWORD: ${SETTLEUP_PASSWORD:-}
+      SETTLEUP_REFRESH_TOKEN: ${SETTLEUP_REFRESH_TOKEN:-}
+      SETTLEUP_FIREBASE_API_KEY: ${SETTLEUP_FIREBASE_API_KEY}
+      SETTLEUP_BASE_URL: ${SETTLEUP_BASE_URL:-https://settle-up-sandbox.firebaseio.com}
+      MCP_AUTH_MODE: ${MCP_AUTH_MODE:-token}
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-}
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-}
+      MCP_GOOGLE_CLIENT_ID: ${MCP_GOOGLE_CLIENT_ID:-}
+      MCP_GOOGLE_CLIENT_SECRET: ${MCP_GOOGLE_CLIENT_SECRET:-}
+      MCP_GOOGLE_ALLOWED_EMAIL: ${MCP_GOOGLE_ALLOWED_EMAIL:-}
+      MCP_OAUTH_SIGNING_KEY: ${MCP_OAUTH_SIGNING_KEY:-}
+      MCP_OAUTH_CLIENT_REDIRECT_URIS: ${MCP_OAUTH_CLIENT_REDIRECT_URIS:-}
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: 8000
+      FASTMCP_HOME: /var/lib/settleup
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - oauth-state:/var/lib/settleup
     restart: unless-stopped
     read_only: true
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      # The server gives a /health route for this test.
       test:
         [
           "CMD",
@@ -31,3 +41,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+volumes:
+  oauth-state:

@@ -15,7 +15,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1
 
 # Create a non-root user.
-RUN useradd --create-home --uid 10001 appuser
+RUN useradd --create-home --uid 10001 appuser \
+    && mkdir -p /var/lib/settleup \
+    && chown appuser:appuser /var/lib/settleup
 WORKDIR /app
 
 # Install the locked requirements.

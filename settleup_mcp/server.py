@@ -8,12 +8,12 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from fastmcp import FastMCP
-from fastmcp.server.auth.providers.jwt import StaticTokenVerifier
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from settleup_mcp.client import SettleUpClient
 from settleup_mcp.config import Settings, get_settings
+from settleup_mcp.mcp_auth import build_auth
 from settleup_mcp.tools import register_tools
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ def create_server(
 ) -> FastMCP:
     """Build the MCP server. Register each tool."""
     settings = settings or get_settings()
+    auth = build_auth(settings)
     client = client or SettleUpClient(settings)
 
     @contextlib.asynccontextmanager
@@ -46,23 +47,6 @@ def create_server(
         finally:
             await client.aclose()
             logger.info("The Settle Up MCP server stopped.")
-
-    auth = None
-    if settings.auth_token:
-        auth = StaticTokenVerifier(
-            tokens={
-                settings.auth_token: {
-                    "client_id": "settleup-agent",
-                    "scopes": [],
-                }
-            }
-        )
-        logger.info("The server requires a bearer token from each agent.")
-    else:
-        logger.warning(
-            "MCP_AUTH_TOKEN is empty. The server accepts each request. "
-            "Use this mode for local tests only."
-        )
 
     mcp: FastMCP = FastMCP(
         name="settleup_mcp",
@@ -94,6 +78,11 @@ def main() -> None:
         level=settings.log_level,
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
+    # HTTP libraries log full request URLs, which can contain Firebase keys/tokens.
+    logging.getLogger("httpx").setLevel(logging.CRITICAL)
+    logging.getLogger("httpx2").setLevel(logging.CRITICAL)
+    logging.getLogger("httpcore").setLevel(logging.CRITICAL)
+    logging.getLogger("httpcore2").setLevel(logging.CRITICAL)
     server = create_server(settings)
     server.run(
         transport="http",

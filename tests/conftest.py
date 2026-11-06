@@ -158,6 +158,7 @@ def make_settings(**changes: Any) -> Settings:
         "path": "/mcp",
         "log_level": "INFO",
         "auth_token": None,
+        "auth_mode": "none",
     }
     values.update(changes)
     return Settings(**values)
